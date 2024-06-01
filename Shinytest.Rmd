@@ -1,0 +1,800 @@
+---
+title: "Shiny_testing"
+author: "Tanay Panat"
+date: "2023-07-27"
+output: html_document
+---
+```{r}
+required_packages <- c("markdown", "tidyverse", "ggplot2", "highcharter", "ggparliament", "plotly", "ggiraph","sf","rvest",
+                       "virdis","ggrepel","ggthemes","rgdal","maptools","scales","rgeos","RColorBrewer","shiny","shinythemes",
+                       "shinyWidgets","DT","shinycssloaders","here")
+
+installed_packages <- rownames(installed.packages())
+
+to_install <- setdiff(required_packages, installed_packages)
+
+install.packages(to_install)
+
+"C:/Program Files/R/R-4.3.3/bin"
+
+library(tidyverse)
+library(ggparliament)
+library(dplyr)
+library(plotly)
+library(highcharter) 
+library(crosstalk)
+library(ggiraph)
+library(ggplot2)
+library(sf)
+library(rvest)
+library(ggrepel)
+library(ggthemes)
+#library(rgdal)
+#library(maptools)
+library(scales)
+library(RColorBrewer)
+#library(rgeos)
+library(shiny)
+library(shinythemes)
+library(shinyWidgets)
+library(DT)
+library(shinycssloaders)
+library(here)
+
+election_2019 <- read_csv("IndiaVotes_PC_All_States_2019.csv",
+                          locale = locale(encoding="latin1"))
+alliance_2019 <- read_csv("Alliance_share_2019.csv",
+                          locale = locale(encoding="latin1"))
+
+election_2019  <- election_2019  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimeen" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress(M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK"
+                          ))
+alliance_2019 <- alliance_2019  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD"))
+
+election_2014 <- read_csv("PM_2014.csv",
+                          locale = locale(encoding="latin1"))
+alliance_2014 <- read_csv("Alliance_share_2014.csv",
+                          locale = locale(encoding="latin1"))
+
+election_2014  <- election_2014  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (MARXIST)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimoon" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress (M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK","Jammu & Kashmir Peoples Democratic Party" = "JKPDP",
+                          "Pattali Makkal Katchi" = "PMK","Indian National Lok Dal" = "INLD",
+                          "Rashtriya Lok Samta Party" = "RLSP","Kerala Congress(M)" = "KCM","All India N.R. Congress" = "AINRC",
+                          "Sikkim Democratic Front" = "SDF", "Swabhimani Paksha" = "SWP", "Rashtriya Janata Dal" = "RJD"))
+
+alliance_2014  <- alliance_2014  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP",
+                          "Communist Party Of India (MARXIST)" = "CPOI (Marx.)", "Rashtriya Janata Dal" = 
+                            "RJD", "Communist Party Of India" = "CPOI",
+                          "All India Anna Dravida Munnetra Kazhagam" = "AIADMK","Jharkhand Mukti Morcha" = "JMM", "Telugu Desam" = "TD"))
+
+election_2009 <- read_csv("IndiaVotes_PC_All_States_2009.csv",
+                          locale = locale(encoding="latin1"))
+
+alliance_2009 <- read_csv("Alliance_share_2009.csv",
+                          locale = locale(encoding="latin1"))
+
+election_2009  <- election_2009  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimoon" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress (M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK","Jammu & Kashmir Peoples Democratic Party" = "JKPDP",
+                          "Pattali Makkal Katchi" = "PMK","Indian National Lok Dal" = "INLD",
+                          "Rashtriya Lok Samta Party" = "RLSP","Kerala Congress(M)" = "KCM","All India N.R. Congress" = "AINRC",
+                          "Sikkim Democratic Front" = "SDF", 'Rashtriya Lok Dal' = 'RLD', 
+                          'Samajwadi Janata Party (RASHTRIYA)' = 'SP', 'All India Forward Bloc' = 'AIFB',
+                          '	Bharatiya Navshakti Party' = 'BNP', 'Asom Gana Parisad' = 'AGP',
+                          'Kerala Congress' = "KCM" , "Indian Federal Democratic Party" = "IFDP",
+                          "Nagaland Peoples Front" = "NPF", 'National Loktantrik Party' = 'NLP',
+                          "Republican Party Of India (A)" = "RPOIA", "Marumalarchi Dravida Munnetra Kazhagam" = "MDMK",
+                          "Muslim League Kerala State Committee" = "MLKSC",
+                          "Communist Party Of India (MARXIST)" = "CPI (Marx.)",
+                          "Rashtriya Janata Dal" = "RJD", "Assam United Democratic Front" = "AUDF",
+                          "Bahujan Vikas Aaghadi" = "BVA", "Bodaland Peoples Front" = "BPF", 
+                          "Haryana Janhit Congress (BL)" = "HJCBL", "Jharkhand Vikas Morcha (Prajatantrik)" = "JVM",
+                          "Swabhimani Paksha" = "SWP"))
+
+alliance_2009  <- alliance_2009  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP",
+                          "Communist Party Of India (MARXIST)" = "CPOI (Marx.)", "Rashtriya Janata Dal" = 
+                            "RJD", "Communist Party Of India" = "CPOI", "Telugu Desam" = "TD"))
+
+election_2004 <- read_csv("IndiaVotes_PC_All_States_2004.csv",
+                          locale = locale(encoding="latin1"))
+alliance_2004 <- read_csv("Alliance_share_2004.csv",
+                          locale = locale(encoding="latin1"))
+
+election_2004  <- election_2004  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimoon" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress (M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK","Jammu & Kashmir Peoples Democratic Party" = "JKPDP",
+                          "Pattali Makkal Katchi" = "PMK","Indian National Lok Dal" = "INLD",
+                          "Rashtriya Lok Samta Party" = "RLSP","Kerala Congress(M)" = "KCM","All India N.R. Congress" = "AINRC",
+                          "Sikkim Democratic Front" = "SDF", 'Rashtriya Lok Dal' = 'RLD', 
+                          'Samajwadi Janata Party (RASHTRIYA)' = 'SP', 'All India Forward Bloc' = 'AIFB',
+                          '	Bharatiya Navshakti Party' = 'BNP', 'Asom Gana Parisad' = 'AGP',
+                          'Kerala Congress' = "KCM" , "Indian Federal Democratic Party" = "IFDP",
+                          "Nagaland Peoples Front" = "NPF", 'National Loktantrik Party' = 'NLP',
+                          "Republican Party Of India (A)" = "RPOIA", "Marumalarchi Dravida Munnetra Kazhagam" = "MDMK",
+                          "Muslim League Kerala State Committee" = "MLKSC","Bharipa Bahujan Mahasangh" = "BBM",
+                          "Peasants And Workers Party Of India" = "PWPI", "Swabhimani Paksha" = "SWP",
+                        "Rashtriya Janata Dal" = "RJD", "Bharatiya Navshakti Party" = "BNP", 
+                        "Akhil Bhartiya Lok Tantrik Congress" = "ABLTC", "Himachal Vikash Congress" = "HVC",
+                        "Manipur State Congress Party" = "MSCP", "Shiromani Akali Dal (SIMRANJIT SINGH MANN)" = "SAD",
+                        "Autonomous State Demand Committee" = "ASDC","Karnataka Congress Party" = "KCP", 
+                        "Maharashtrawadi Gomantak" = "MG", "Muslim Leage" = "ML",
+                        "United Goans Democratic Party" = "UGDP", "Samata Party" = "SP",
+                        "Communist Party Of India (MARXIST)" = "CPOI(M)"
+                        ))
+
+alliance_2004  <- alliance_2004 %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP",
+                          "Communist Party Of India (MARXIST)" = "CPOI (Marx.)", "Rashtriya Janata Dal" = 
+                            "RJD", "Communist Party Of India" = "CPOI","	Shiromani Akali Dal" = "SAD", "Telugu Desam" = "TD"))
+
+election_1999 <- read_csv("IndiaVotes_PC_All_States_1999.csv",
+                          locale = locale(encoding="latin1"))
+alliance_1999 <- read_csv("Alliance_share_1999.csv",
+                          locale = locale(encoding="latin1"))
+
+election_1999  <- election_1999  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimoon" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress (M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK","Jammu & Kashmir Peoples Democratic Party" = "JKPDP",
+                          "Pattali Makkal Katchi" = "PMK","Indian National Lok Dal" = "INLD",
+                          "Rashtriya Lok Samta Party" = "RLSP","Kerala Congress(M)" = "KCM","All India N.R. Congress" = "AINRC",
+                          "Sikkim Democratic Front" = "SDF", 'Rashtriya Lok Dal' = 'RLD', 
+                          'Samajwadi Janata Party (RASHTRIYA)' = 'SP', 'All India Forward Bloc' = 'AIFB',
+                          '	Bharatiya Navshakti Party' = 'BNP', 'Asom Gana Parisad' = 'AGP',
+                          'Kerala Congress' = "KCM" , "Indian Federal Democratic Party" = "IFDP",
+                          "Nagaland Peoples Front" = "NPF", 'National Loktantrik Party' = 'NLP',
+                          "Republican Party Of India (A)" = "RPOIA", "Marumalarchi Dravida Munnetra Kazhagam" = "MDMK",
+                          "Muslim League Kerala State Committee" = "MLKSC","Bharipa Bahujan Mahasangh" = "BBM",
+                          "Peasants And Workers Party Of India" = "PWPI", "Swabhimani Paksha" = "SWP",
+                        "Rashtriya Janata Dal" = "RJD", "Bharatiya Navshakti Party" = "BNP", 
+                        "Akhil Bhartiya Lok Tantrik Congress" = "ABLTC", "Himachal Vikash Congress" = "HVC",
+                        "Manipur State Congress Party" = "MSCP", "Shiromani Akali Dal (SIMRANJIT SINGH MANN)" = "SAD",
+                        "Autonomous State Demand Committee" = "ASDC","Karnataka Congress Party" = "KCP", 
+                        "Maharashtrawadi Gomantak" = "MG", "Muslim Leage" = "ML",
+                        "United Goans Democratic Party" = "UGDP", "Samata Party" = "SP",
+                        "Communist Party Of India (MARXIST)" = "CPOI(M)", "M.G.R.Anna D.M.Kazhagam" = "MGADMK"
+                        ))
+alliance_1999  <- alliance_1999  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP",
+                          "All India Anna Dravida Munnetra Kazhagam" = "AIADMK",
+                          "Communist Party Of India (MARXIST)" = "CPOI (Marx.)",  "Telugu Desam" = "TD",
+                          "Marumalarchi Dravida Munnetra Kazhagam" = "MDMK"))
+
+election_1996 <- read_csv("IndiaVotes_PC_All_States_1996.csv",
+                          locale = locale(encoding="latin1"))
+alliance_1996 <- read_csv("Alliance_share_1996.csv",
+                          locale = locale(encoding="latin1"))
+
+election_1996  <- election_1996  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimoon" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress (M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK","Jammu & Kashmir Peoples Democratic Party" = "JKPDP",
+                          "Pattali Makkal Katchi" = "PMK","Indian National Lok Dal" = "INLD",
+                          "Rashtriya Lok Samta Party" = "RLSP","Kerala Congress(M)" = "KCM","All India N.R. Congress" = "AINRC",
+                          "Sikkim Democratic Front" = "SDF", 'Rashtriya Lok Dal' = 'RLD', 
+                          'Samajwadi Janata Party (RASHTRIYA)' = 'SP', 'All India Forward Bloc' = 'AIFB',
+                          '	Bharatiya Navshakti Party' = 'BNP', 'Asom Gana Parisad' = 'AGP',
+                          'Kerala Congress' = "KCM" , "Indian Federal Democratic Party" = "IFDP",
+                          "Nagaland Peoples Front" = "NPF", 'National Loktantrik Party' = 'NLP',
+                          "Republican Party Of India (A)" = "RPOIA", "Marumalarchi Dravida Munnetra Kazhagam" = "MDMK",
+                          "Muslim League Kerala State Committee" = "MLKSC","Bharipa Bahujan Mahasangh" = "BBM",
+                          "Peasants And Workers Party Of India" = "PWPI", "Swabhimani Paksha" = "SWP",
+                        "Rashtriya Janata Dal" = "RJD", "Bharatiya Navshakti Party" = "BNP", 
+                        "Akhil Bhartiya Lok Tantrik Congress" = "ABLTC", "Himachal Vikash Congress" = "HVC",
+                        "Manipur State Congress Party" = "MSCP", "Shiromani Akali Dal (SIMRANJIT SINGH MANN)" = "SAD",
+                        "Autonomous State Demand Committee" = "ASDC","Karnataka Congress Party" = "KCP", 
+                        "Maharashtrawadi Gomantak" = "MG", "Muslim Leage" = "ML",
+                        "United Goans Democratic Party" = "UGDP", "Samata Party" = "SP",
+                        "Communist Party Of India (MARXIST)" = "CPOI(M)", "Janata Dal" = "JD", 
+                        "Tamil Maanila Congress (MOOPANAR)" = "TMCM", "All India Indira Congress (TIWARI)" = "AIICT",
+                        "Haryana Vikas Party" = "HVP", "Madhya Pradesh Vikas Congress" = "MPVC"
+                        ))
+
+alliance_1996  <- alliance_1996  %>%
+    mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP",
+                          "Janata Dal" = "JD", "Communist Party Of India (MARXIST)" = "CPOI (Marx.)",
+                          "Tamil Maanila Congress (MOOPANAR)" = "TMC", "Communist Party Of India" = "CPOI",
+                          "Telugu Desam" = "TD","All India Indira Congress (TIWARI)" = "AIIC","Independent" = "INDP.","Samata Party" = "SaP", "Revolutionary Socialist Party" = "RSP"))
+```
+
+```{r}
+election_data <- bind_rows(election_2019,election_2014, election_2009, election_2004, election_1999,
+                           election_1996)
+election_data <- election_data[c(1:12)]
+election_data <- election_data %>%     
+  mutate(Party = recode(Party, "Bharatiya Janta Party" = "BJP", "Indian National Congress" = "INC",
+                          "Janata Dal (United)" = "JDU", "All India Trinamool Congress" = "AITC",
+                          "Bahujan Samaj Party" = "BSP", "Communist Party Of India (Marxist)" = "CPI (Marx.)",
+                          "Shiv Sena" = "SS", "Samajwadi Party" = "SP", "Aam Aadmi Party" = "AAP",
+                          "Nationalist Congress Party" = "NCP", "Dravida Munetra Kazhagam" = "DMK",
+                          "Yuvajana Sramika Rythu Congress Party" = "YSRCP", "Biju Janata Dal" = "BJD",
+                          "Telangana Rashtra Samithi" = "TRS", "Lok Jan Shakti Party" = "LJSP","Independent" =                             "INDP.", "Telugu Desam" = "TD","Indian Union Muslim League" = "IUML", "National Conference" = "NC","Apna Dal (Soneylal)" = "ADS", "Communist Party Of India" = "CPOI","Shiromani Akali Dal" = "SAD","All India Anna Dravida Munnetra Kazhagam" = "AIADMK", 
+                          "All India Majlis-E-Ittehadul Muslimoon" = "AIMIM", "All India United Democratic Front" = "AIUDF",
+                           "All Jharkhand Students Union" = "AJSU", "Janata Dal (Secular)" = "JDS", "Jharkhand Mukti Morcha" =
+                            "JMM", "Kerala Congress (M)" = "KCM","Jammu & Kashmir National Conference" = "JKNC", 
+                          "Mizo National Front" = "MNF", "Nationalist Democratic Progressive Party" = "NDPP", 
+                          "Naga Peoples Front" = "NPF", "National People's Party" = "NPP","Rashtriya Loktantrik Party" = "RLP",
+                          "Revolutionary Socialist Party" = "RSP", "Sikkim Krantikari Morcha" = "SKM",
+                          "Viduthalai Chiruthaigal Katchi" = "VCK","Jammu & Kashmir Peoples Democratic Party" = "JKPDP",
+                          "Pattali Makkal Katchi" = "PMK","Indian National Lok Dal" = "INLD",
+                          "Rashtriya Lok Samta Party" = "RLSP","Kerala Congress(M)" = "KCM","All India N.R. Congress" = "AINRC",
+                          "Sikkim Democratic Front" = "SDF", 'Rashtriya Lok Dal' = 'RLD', 
+                          'Samajwadi Janata Party (RASHTRIYA)' = 'SP', 'All India Forward Bloc' = 'AIFB',
+                          '	Bharatiya Navshakti Party' = 'BNP', 'Asom Gana Parisad' = 'AGP',
+                          'Kerala Congress' = "KCM" , "Indian Federal Democratic Party" = "IFDP",
+                          "Nagaland Peoples Front" = "NPF", 'National Loktantrik Party' = 'NLP',
+                          "Republican Party Of India (A)" = "RPOIA", "Marumalarchi Dravida Munnetra Kazhagam" = "MDMK",
+                          "Muslim League Kerala State Committee" = "MLKSC","Bharipa Bahujan Mahasangh" = "BBM",
+                          "Peasants And Workers Party Of India" = "PWPI", "Swabhimani Paksha" = "SWP",
+                        "Rashtriya Janata Dal" = "RJD", "Bharatiya Navshakti Party" = "BNP", 
+                        "Akhil Bhartiya Lok Tantrik Congress" = "ABLTC", "Himachal Vikash Congress" = "HVC",
+                        "Manipur State Congress Party" = "MSCP", "Shiromani Akali Dal (SIMRANJIT SINGH MANN)" = "SAD",
+                        "Autonomous State Demand Committee" = "ASDC","Karnataka Congress Party" = "KCP", 
+                        "Maharashtrawadi Gomantak" = "MG", "Muslim Leage" = "ML",
+                        "United Goans Democratic Party" = "UGDP", "Samata Party" = "SP",
+                        "Communist Party Of India (MARXIST)" = "CPOI(M)"
+                        ))
+
+election_data <- election_data %>%   
+  mutate(Margin_perc = round((Margin/Votes)*100,2)) %>% 
+  mutate(Turnout = round((Votes/Electors)*100,2))
+colnames(election_data)[5] = "Winning_Candidate"
+
+alliance_data <- bind_rows(alliance_2019,alliance_2014,alliance_2009,alliance_2004,alliance_1999,alliance_1996)
+```
+
+
+```{r}
+cols_2019 <- c("BJP" = "#FF8C00",
+ "INC" = "#0000FF",
+ "DMK" = "#00FA9A",
+ "AITC" = "#20B2AA",
+ "YSRC" = "#B8860B",
+ 'SS'='#B22222',
+  'JDU'='#FF00FF',
+ "JD" = "lightblue",
+                              'BJD'='#6495ED',
+                              'BSP'='#ADFF2F',
+                              'TRS'='#FF7F50',
+                              'LJSP'='#CD5C5C',
+                              'NCP'='#F08080',
+                              'SP'='#E9967A',
+                              'INDP.'='white',
+                              "RJD" = "darkgreen",
+                              'CPM (Marx.)'='#FF0000',
+                              "CPOI(M)" = '#FF0000',
+                              'IUML'='#FF4500',
+                              'NC'='#800000',
+                              'TD'='#9ACD32',
+                              'ADS'='#FFD700',
+                              'CPOI'='#FF0000',
+                              'SAD'='#000080',
+                              'AAP'='#EEE8AA',
+                              'AIADMK'='#E81B23',
+                              'AIMIM'='#000000',
+                              'AIUDF'='#000000',
+                              'AJSU'='#FF0000',
+                              'JDS'='#00FF00',
+                              'JMM'='#20B2AA',
+                              'KCM'='#FFFF00',
+                              'JKNC'='#00FFFF',
+                              'MNF'='#FF00FF',
+                              'NDPP'='#C0C0C0',
+                              'NPF'='#808080',
+                              "NPP"='#800000',
+                              'RLP'='#808000',
+                              'RSP'='#008000',
+                              'SKM'='#800080',
+                              'VCK'='#008080',
+                              'JKPDP' = '#080046',
+                              'PMK' = 'magenta',
+                              'INLD' = 'brown',
+                              'RLSP' = '#FD0060',
+                              'MDMK' = '#529AC1',
+                              'AIFB' = '#6A4E5A',
+                              'MLKSC' = '#007F33',
+                              'RPOIA' = '#E5FA5E',
+                              'NLP' = '#BD9090',
+                              'IFDP' = '#00B6A1',
+                              'AGP' = '#B60021',
+                              'RLD' = '#8F00B6',
+                              'BNP' = '#188100',
+                              'BBM' = '#ADFF2F',
+                              'PWPI' = '#FFFF00',
+                              'RPOIA' = 'seagreen',
+                              'SWP' = 'lightgreen',
+                              'Others' = "cyan",
+                              "TMCM" = "purple"
+)
+```
+
+
+```{r}
+elec_1419 <- election_data %>% 
+  filter(Year %in% c(2014,2019))
+
+elec_1419$"PC Name" <- toupper(elec_1419$"PC Name")
+
+elec_1419 <- elec_1419 %>% 
+  mutate(Margin_perc = round((Margin/Votes)*100,2)) %>% 
+  mutate(Turnout = round((Votes/Electors)*100,2))
+colnames(elec_1419)[5] = "Winning_Candidate"
+```
+
+
+```{r}
+shp_ind <- st_read(here("parliamentary-constituencies","india_pc_2019.shp"))
+
+shp_ind.f <- st_as_sf(shp_ind, region = "PC_NAME")
+
+shp_ind.f$PC_NAME <- gsub("\\s*\\(SC\\)", "", shp_ind.f$PC_NAME)
+
+shp_ind.f$PC_NAME <- gsub("\\s*\\(ST\\)", "", shp_ind.f$PC_NAME)
+
+colnames(elec_1419)[1] = "PC_NAME"
+merged_1419 <- merge(shp_ind.f,elec_1419, by = "PC_NAME")
+final.data_1419 <- merged_1419[order(merged_1419$Year), ]
+```
+
+
+```{r}
+names(merged_1419)
+```
+
+
+```{r}
+unique(merged_1419$Year)
+```
+
+
+```{r}
+x <- final.data_1419 %>% 
+  filter(Year == 2014)
+```
+
+
+```{r}
+maha_plot <- election_data %>%
+  group_by(Year,State,Party) %>%
+  count() %>%
+  group_by(Year,State) %>%
+  mutate(Percentage = round((n / sum(n) * 100),2))
+```
+
+### Alliance Wise Analysis
+
+
+```{r}
+alliance_seats = alliance_data %>% 
+  group_by(Alliance,Year) %>% 
+  mutate(seats_by_alliance = sum(Won))
+
+top5_parties <- alliance_seats %>%
+  group_by(Year, Alliance) %>%
+  top_n(5, wt = Won) %>%
+  ungroup()
+```
+
+```{r}
+alliance_dist <- top5_parties %>% 
+  group_by(Alliance, Year) %>% 
+  mutate(Percentage =  round((Won / seats_by_alliance * 100),2))
+```
+
+
+
+# Vote turnout over the years and shiny app for vote percentage distribution
+```{r}
+t_plt <- election_data %>% 
+  group_by(Year) %>%
+  summarise(participation = round(mean(Turnout),2)) %>% 
+  ggplot(aes(x = Year, y = participation)) +
+  geom_point() +
+  geom_line() +
+  geom_text(aes(label = participation), vjust = -1, hjust = 0.5) + 
+  scale_x_continuous(breaks = unique(election_data$Year)) +
+  ylim(c(58,72)) +
+  labs(x = "Year", y = "Turnout %") +
+  theme_clean()
+```
+
+
+```{r}
+# Average state-turnout vs overall average turnout
+
+df1 <- election_data %>% 
+  group_by(Year) %>%
+  summarise(participation = round(mean(Turnout),2))
+
+df2 <- election_data %>% 
+  group_by(Year, State) %>% 
+  summarise(participation = round(mean(Turnout),2)) %>% 
+  group_by(Year) %>% 
+  summarise(Avg_parti = round(mean(participation),2))
+
+combined_df <- df2 %>%
+  left_join(df1, by = "Year")
+```
+
+```{r}
+long_df <- combined_df %>%
+  pivot_longer(cols = c(Avg_parti, participation),
+               names_to = "Metric",
+               values_to = "Value")
+```
+
+
+
+
+
+```{r}
+# Vote share V/s Seat share
+
+v_s_share <- alliance_data %>% 
+  filter(Party %in% c("INC","BJP")) %>% 
+  mutate(seat_share = round((Won/543)*100,2))
+
+colnames(v_s_share)[5] = "Votes_perc"
+```
+
+
+
+```{r}
+library(highcharter)
+
+dout <- data_to_hierarchical(alliance_dist, c(Alliance, Party),Won)
+```
+
+
+```{r}
+NDA <- subset(alliance_dist, Alliance == "NDA")
+UPA <- subset(alliance_dist, Alliance == "UPA")
+THIRD <- subset(alliance_dist, Alliance == "THIRD FRONT")
+df4 <- NDA
+```
+
+
+
+```{r}
+temp <- election_data %>% 
+  group_by(Year,Party) %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+```
+
+```{r}
+top_5_parties <- election_data %>%
+  group_by(Year, Party) %>%
+  count(Party) %>%
+  arrange(Year, desc(n)) %>%
+  group_by(Year) %>%
+  mutate(rank = row_number()) %>%
+  filter(rank <= 5) %>%
+  ungroup() %>%
+  select(Year, Party, n) %>%
+  arrange(Year, desc(n))
+
+top_5_sum <- top_5_parties %>%
+  group_by(Year) %>%
+  summarise(Top5Sum = sum(n))
+
+n1 = list(Year = 1996, Party = "Others", n = 139)
+n2 = list(Year = 1999, Party = "Others", n = 158)
+n3 = list(Year = 2004, Party = "Others", n = 156)
+n4 = list(Year = 2009, Party = "Others", n = 156)
+n5 = list(Year = 2014, Party = "Others", n = 125)
+n6 = list(Year = 2019, Party = "Others", n = 121)
+
+top_5_parties = rbind(top_5_parties,n1)
+top_5_parties = rbind(top_5_parties,n2)
+top_5_parties = rbind(top_5_parties,n3)
+top_5_parties = rbind(top_5_parties,n4)
+top_5_parties = rbind(top_5_parties,n5)
+top_5_parties = rbind(top_5_parties,n6)
+
+top_5_parties <- top_5_parties %>%
+  group_by(Year) %>% 
+  mutate(Perc = round((n / 542)*100,2))
+```
+
+```{r}
+mwr <- read_csv("Men_Women_ratio.csv")
+```
+
+```{r}
+long_df2 <- mwr %>%
+  pivot_longer(cols = c(Women, Men),
+               names_to = "Sex",
+               values_to = "Value")
+
+long_df2 <- long_df2 %>% 
+  mutate(Percentage = round((Value/542)*100,2))
+
+long_df2 <- subset(long_df2,select = c(Year,Sex,Value,Percentage))
+
+long_df2 <- long_df2 %>% 
+  group_by(Year) %>% 
+  mutate(lab.ypos = cumsum(Percentage) - 0.5*Percentage)
+```
+
+```{r}
+vote_share <- read_csv("Vote_share.csv")
+```
+
+
+  
+```{r}
+category_wise <- election_data %>%
+  mutate(Type = ifelse(is.na(Type), "ST", Type)) %>%
+  mutate(Type = ifelse(Type == "GENP", "GEN", Type)) %>%
+  group_by(Year) %>%
+  count(Type)
+```
+
+```{r}
+# Statewise analysis
+state_result <-  election_data %>% 
+  group_by(Year,State) %>% 
+  mutate(Avg_Turnout = round(mean(Turnout),2)) %>% 
+  count(Avg_Turnout, Party)
+```
+
+
+```{r}
+no_of_seats <- election_2019 %>% 
+  count(State) %>% 
+  arrange(desc(n))
+```
+
+
+```{r}
+state_category <- election_data %>%
+  mutate(Type = ifelse(is.na(Type), "ST", Type)) %>%
+  mutate(Type = ifelse(Type == "GENP", "GEN", Type)) %>%
+  group_by(Year,State) %>%
+  count(Type)
+```
+
+
+```{r}
+partiwise_result <- election_data %>% 
+  filter(Party %in% c("BJP","INC")) %>% 
+  group_by(Year,Party) %>% 
+  count(Party)
+  
+
+```
+
+
+```{r}
+vs_Party <- vote_share %>% 
+  filter(Party %in% c("BJP","INC"))
+```
+
+
+```{r}
+data_semi_1996 <- election_1996 %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+
+data_semi_1999 <- election_1999 %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+
+data_semi_2004 <- election_2004 %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+
+data_semi_2009 <- election_2009 %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+
+data_semi_2014 <- election_2014 %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+
+data_semi_2019 <- election_2019 %>% 
+  count(Party) %>% 
+  arrange(desc(n))
+```
+
+```{r}
+Parlia_semicircle_1996 <- parliament_data(election_data = data_semi_1996,
+ type = "semicircle",
+ parl_rows = 12,
+ party_seats = data_semi_1996$n)
+Parlia_semicircle_1996 <- Parlia_semicircle_1996 %>% 
+  mutate(Year = 1996)
+
+Parlia_semicircle_1999 <- parliament_data(election_data = data_semi_1999,
+ type = "semicircle",
+ parl_rows = 12,
+ party_seats = data_semi_1999$n)
+Parlia_semicircle_1999 <- Parlia_semicircle_1999 %>% 
+  mutate(Year = 1999)
+
+Parlia_semicircle_2004 <- parliament_data(election_data = data_semi_2004,
+ type = "semicircle",
+ parl_rows = 12,
+ party_seats = data_semi_2004$n)
+Parlia_semicircle_2004 <- Parlia_semicircle_2004 %>% 
+  mutate(Year = 2004)
+
+Parlia_semicircle_2009 <- parliament_data(election_data = data_semi_2009,
+ type = "semicircle",
+ parl_rows = 12,
+ party_seats = data_semi_2009$n)
+Parlia_semicircle_2009 <- Parlia_semicircle_2009 %>% 
+  mutate(Year = 2009)
+
+Parlia_semicircle_2014 <- parliament_data(election_data = data_semi_2014,
+ type = "semicircle",
+ parl_rows = 12,
+ party_seats = data_semi_2014$n)
+Parlia_semicircle_2014 <- Parlia_semicircle_2014 %>% 
+  mutate(Year = 2014)
+
+Parlia_semicircle_2019 <- parliament_data(election_data = data_semi_2019,
+ type = "semicircle",
+ parl_rows = 12,
+ party_seats = data_semi_2019$n)
+Parlia_semicircle_2019 <- Parlia_semicircle_2019 %>% 
+  mutate(Year = 2019)
+
+```
+
+
+```{r}
+# Code for generation of the horseshoes parliamentary plot.
+ plt <- ggplot(Parlia_semicircle_1996,aes(x = x, y = y, colour = Party)) +
+ geom_parliament_seats(stat = "identity",position = "identity",size = 5) + 
+ theme_ggparliament() +
+ labs(colour = "Party", 
+ title = "Indian 1996 Parliament", legend.position = "center") +
+ theme_ggparliament() +
+ labs(colour = "Parties", 
+ title = "Indian 1996 Parliament", legend.position = "center") +
+ scale_color_manual(values = cols_2019) +
+ theme(legend.position = "bottom") +
+ geom_highlight_government(Party == "BJP") +
+ draw_totalseats(n = 543, type = "semicircle") +
+ draw_majoritythreshold(
+ n = 272,
+ label = TRUE,
+ type = "semicircle"
+ ) +
+ theme(plot.title = element_text(hjust = 0.5),
+       plot.background = element_rect(fill = "#FFDBAC"),
+       panel.background = element_rect(fill = "#FFDBAC"),
+       legend.background = element_rect(fill = "#FFDBAC"))
+```
+
+
+```{r}
+years <- c(1996, 1999, 2004, 2009, 2014, 2019)
+image_sources <- c(
+  "pic_1996.PNG",
+  "pic_1999.PNG",
+  "pic_2004.PNG",
+  "pic_2009.PNG",
+  "pic_2014.PNG",
+  "pic_2019.PNG"
+)
+image_data <- data.frame(Year = years, Image_Source = image_sources)
+```
+```{r}
+state_seat_data <- read_csv("State_seats_data.csv")
+```
+
+
