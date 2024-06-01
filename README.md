@@ -1,7 +1,5 @@
-##########################################################################################################################################
 Title: Analysis of Election in Worlds Largest Democracy
 Author: Tanay Sunil Panat
-##########################################################################################################################################
 
 This project provides in depth analysis of General Elections in India, focusing on various aspects such as state wise analysis, party-wise analysis, alliance-wise analysis and more.
 
