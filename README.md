@@ -1,13 +1,10 @@
 ##########################################################################################################################################
-University of New South Wales - UNSW
-DATA5002 - Data Visualisation - Assignment 2
 Title: Analysis of Election in Worlds Largest Democracy
 Author: Tanay Sunil Panat
-zID: z5462526
-
 ##########################################################################################################################################
 
 This project provides in depth analysis of General Elections in India, focusing on various aspects such as state wise analysis, party-wise analysis, alliance-wise analysis and more.
+
 The goal of the project is to provide a comprahensive analysis of India's recent political scenario.
 
 The project was created using RStudio, with the Shiny package for interactive web application and analysis. 
